@@ -147,5 +147,5 @@ class Pop3:  #邮件接收类
 
             
 
-class SQL:  #数据存储类
+#class SQL:  #数据存储类
 
