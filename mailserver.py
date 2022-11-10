@@ -20,7 +20,7 @@ class Smtp: #邮件发送类
         self.username=username
         self.password=password
     def sendmail(self):
-        f=open(self.__setattr__mail.store_addr)
+        f=open(self.mail.store_addr)
         message=f.read()
         Socket=socket(AF_INET,SOCK_STREAM)
         Socket.connect(self.mailserver,25)
