@@ -183,14 +183,16 @@ class Pop3:  #邮件接收类
             recvlist=recv.split('\n')
             maillist=[]
             for per in recvlist:
-                Socket.sendall(('TOP '+per[0]+' 5').encode())
+                Socket.sendall(('TOP '+per[0]+' 5\r\n').encode())
                 recv=Socket.recv(2048).decode()
                 recvlist=recv.split('\n')
                 mail=Mail()
                 mail.receiver=self.username
                 mail.sender=recvlist[0][4:]
                 mail.topic=recvlist[3]
-                mail.store_addr=path+'\\'+per[0]+'.txt'
+                Socket.send(('UIDL '+per[0]+'\r\n').encode())
+                uid=Socket.recv(1024).decode()
+                mail.store_addr=path+'\\'+uid+'.txt'
                 maillist.append(mail)
             self.store(maillist)
             print(recv)
@@ -202,8 +204,10 @@ class Pop3:  #邮件接收类
             if(recv[0:3]!='+OK'):
                 print("error")
                 return 
+            Socket.sendall(('UIDL '+index+'\r\n').encode())
+            uid=Socket.recv(1024).decode()
             recv=Socket.recv(1024).decode()
-            f=open(path+'\\'+index+'.txt',mode='w')
+            f=open(path+'\\'+uid+'.txt',mode='w')
             recv=Socket.recv(65535).decode()
             f.write(recv)
             f.close()
