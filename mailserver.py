@@ -9,6 +9,62 @@ class Mail:
     topic=''  #标题
     store_addr=''  #文件储存地址
 
+class SQL:  # 数据存储类
+    @staticmethod
+    def create_sql(self):
+        try:
+            conn = pymysql.connect(host='localhost', user='root', password='123456',port=3306, charset='utf8')
+        except Exception as e:
+            print(f'数据库连接失败：{e}')
+        cursor = conn.cursor()
+        sql_init = 'create table  %s (sender char(20), receiver char(20), topic char(30), store_addr char(50) ' \
+                   'PRIMARY KEY(sender, receiver, topic))' % (GroupII,)
+        cursor.execute(sql_init)
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def search_sql(sender, receiver, topic):
+        try:
+            conn = pymysql.connect(host='localhost', user='root', password='123456', port=3306, charset='utf8')
+        except Exception as e:
+            print(f'数据库连接失败：{e}')
+        cursor = conn.cursor()
+        sql_search = 'select * from GroupII WHERE sender = %s AND receiver = %s AND topic = %s' \
+                     % (sender, receiver, topic)
+        cursor.execute(sql_search)
+        results = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        if not results:
+            return
+        return results
+
+    @staticmethod
+    def delete_sql(sender, receiver, topic):
+        try:
+            conn = pymysql.connect(host='localhost', user='root', password='123456', port=3306, charset='utf8')
+        except Exception as e:
+            print(f'数据库连接失败：{e}')
+        cursor = conn.cursor()
+        sql_delete = 'DELETE FROM user WHERE sender = %s AND receiver = %s AND topic = %s' % (sender, receiver, topic)
+        cursor.execute(sql_delete)
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def add_sql(sender, receiver, topic, store_addr):
+        try:
+            conn = pymysql.connect(host='localhost', user='root', password='123456', port=3306, charset='utf8')
+        except Exception as e:
+            print(f'数据库连接失败：{e}')
+        cursor = conn.cursor()
+        sql_add = 'INSERT INTO GroupII VALUES (%s,%s,%s,%s,%s,%s)' % (sender, receiver, topic, store_addr)
+        cursor.execute(sql_add)
+        conn.commit()
+        cursor.close()
+        conn.close()
+
 class Smtp: #邮件发送类
     mailserver=''  #邮件服务器
     username=''   #用户名
@@ -84,8 +140,9 @@ class Pop3:  #邮件接收类
         self.mailserver=mailserver
         self.username=username
         self.password=password
-    def store(self,recvlist):
-        
+    def store(self,maillist):
+        for i in maillist:
+            SQL().add_sql(i.sender,i.receiver,i.topic,i.store_addr)
         return
     def recvmail(self,operation,index):
         
@@ -123,7 +180,21 @@ class Pop3:  #邮件接收类
                 print("error")
                 return 
             recv=Socket.recv(65536).decode()
-            self.store(recv)
+            recvlist=recv.split('\n')
+            maillist=[]
+            for per in recvlist:
+                Socket.sendall(('TOP '+per[0]+' 5\r\n').encode())
+                recv=Socket.recv(2048).decode()
+                recvlist=recv.split('\n')
+                mail=Mail()
+                mail.receiver=self.username
+                mail.sender=recvlist[0][4:]
+                mail.topic=recvlist[3]
+                Socket.send(('UIDL '+per[0]+'\r\n').encode())
+                uid=Socket.recv(1024).decode()
+                mail.store_addr=path+'\\'+uid+'.txt'
+                maillist.append(mail)
+            self.store(maillist)
             print(recv)
             ##此处需连接数据库##
         elif operation=='RETR':
@@ -133,8 +204,10 @@ class Pop3:  #邮件接收类
             if(recv[0:3]!='+OK'):
                 print("error")
                 return 
+            Socket.sendall(('UIDL '+index+'\r\n').encode())
+            uid=Socket.recv(1024).decode()
             recv=Socket.recv(1024).decode()
-            f=open(path+'\\'+index+'.txt',mode='w')
+            f=open(path+'\\'+uid+'.txt',mode='w')
             recv=Socket.recv(65535).decode()
             f.write(recv)
             f.close()
@@ -145,7 +218,4 @@ class Pop3:  #邮件接收类
         Socket.close()
         return 
 
-            
-
-#class SQL:  #数据存储类
 
