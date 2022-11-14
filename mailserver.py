@@ -140,6 +140,7 @@ class Pop3:  #邮件接收类
         self.mailserver=mailserver
         self.username=username
         self.password=password
+
     def store(self,maillist):
         for i in maillist:
             SQL().add_sql(i.sender,i.receiver,i.topic,i.store_addr)
