@@ -1,5 +1,5 @@
 from SigninWindow import Ui_Dialog as SignWindow_Ui
-from MainWindow import Ui_Form as MainWindow_Ui
+from MainWindow import Ui_MainWindow as MainWindow_Ui
 from PyQt5 import QtCore, QtWidgets
 import sys
 

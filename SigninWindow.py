@@ -11,7 +11,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(503, 486)
+        Dialog.resize(514, 496)
+        Dialog.setMinimumSize(QtCore.QSize(514, 496))
+        Dialog.setMaximumSize(QtCore.QSize(514, 496))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         brush.setStyle(QtCore.Qt.SolidPattern)
@@ -37,8 +39,11 @@ class Ui_Dialog(object):
         font.setPointSize(10)
         Dialog.setFont(font)
         Dialog.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("../dove1.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        Dialog.setWindowIcon(icon)
         self.labelServerAddress = QtWidgets.QLabel(Dialog)
-        self.labelServerAddress.setGeometry(QtCore.QRect(50, 220, 131, 31))
+        self.labelServerAddress.setGeometry(QtCore.QRect(120, 220, 61, 31))
         font = QtGui.QFont()
         font.setFamily("Microsoft YaHei UI")
         font.setPointSize(10)
@@ -64,7 +69,7 @@ class Ui_Dialog(object):
         self.lineEditUsername.setText("")
         self.lineEditUsername.setObjectName("lineEditUsername")
         self.labelPassword = QtWidgets.QLabel(Dialog)
-        self.labelPassword.setGeometry(QtCore.QRect(90, 320, 91, 31))
+        self.labelPassword.setGeometry(QtCore.QRect(100, 320, 81, 31))
         font = QtGui.QFont()
         font.setFamily("Microsoft YaHei UI")
         font.setPointSize(10)
@@ -81,7 +86,7 @@ class Ui_Dialog(object):
         self.lineEditPassword.setText("")
         self.lineEditPassword.setObjectName("lineEditPassword")
         self.pushButtonSignin = QtWidgets.QPushButton(Dialog)
-        self.pushButtonSignin.setGeometry(QtCore.QRect(200, 380, 91, 41))
+        self.pushButtonSignin.setGeometry(QtCore.QRect(220, 380, 91, 41))
         font = QtGui.QFont()
         font.setFamily("Microsoft YaHei UI")
         font.setPointSize(11)
@@ -104,18 +109,24 @@ class Ui_Dialog(object):
         self.comboBoxServerAddress = QtWidgets.QComboBox(Dialog)
         self.comboBoxServerAddress.setGeometry(QtCore.QRect(190, 220, 251, 31))
         self.comboBoxServerAddress.setObjectName("comboBoxServerAddress")
+        self.comboBoxServerAddress.addItem("")
+        self.comboBoxServerAddress.addItem("")
+        self.comboBoxServerAddress.addItem("")
+        self.comboBoxServerAddress.addItem("")
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.labelServerAddress.setText(_translate("Dialog", "Server Address:"))
+        Dialog.setWindowTitle(_translate("Dialog", "EasyMail"))
+        self.labelServerAddress.setText(_translate("Dialog", "Server:"))
         self.labelUsername.setText(_translate("Dialog", "Username:"))
         self.labelPassword.setText(_translate("Dialog", "Password:"))
         self.pushButtonSignin.setText(_translate("Dialog", "Sign in"))
         self.labelEasyMail.setText(_translate("Dialog", "EasyMail"))
-
-
+        self.comboBoxServerAddress.setItemText(0, _translate("Dialog", "QQ Mail"))
+        self.comboBoxServerAddress.setItemText(1, _translate("Dialog", "WHU E-Mail"))
+        self.comboBoxServerAddress.setItemText(2, _translate("Dialog", "163 Mail"))
+        self.comboBoxServerAddress.setItemText(3, _translate("Dialog", "Gmail"))
 

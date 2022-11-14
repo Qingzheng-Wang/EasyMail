@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>521</width>
-    <height>533</height>
+    <width>514</width>
+    <height>496</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>514</width>
+    <height>496</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>514</width>
+    <height>496</height>
+   </size>
   </property>
   <property name="palette">
    <palette>
@@ -84,14 +96,18 @@
    <enum>Qt::PreventContextMenu</enum>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>EasyMail</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../dove1.png</normaloff>../dove1.png</iconset>
   </property>
   <widget class="QLabel" name="labelServerAddress">
    <property name="geometry">
     <rect>
-     <x>50</x>
+     <x>120</x>
      <y>220</y>
-     <width>131</width>
+     <width>61</width>
      <height>31</height>
     </rect>
    </property>
@@ -104,7 +120,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Server Address:</string>
+    <string>Server:</string>
    </property>
   </widget>
   <widget class="QLabel" name="labelUsername">
@@ -150,9 +166,9 @@
   <widget class="QLabel" name="labelPassword">
    <property name="geometry">
     <rect>
-     <x>90</x>
+     <x>100</x>
      <y>320</y>
-     <width>91</width>
+     <width>81</width>
      <height>31</height>
     </rect>
    </property>
@@ -190,7 +206,7 @@
   <widget class="QPushButton" name="pushButtonSignin">
    <property name="geometry">
     <rect>
-     <x>200</x>
+     <x>220</x>
      <y>380</y>
      <width>91</width>
      <height>41</height>
@@ -252,6 +268,26 @@
      <height>31</height>
     </rect>
    </property>
+   <item>
+    <property name="text">
+     <string>QQ Mail</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>WHU E-Mail</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>163 Mail</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Gmail</string>
+    </property>
+   </item>
   </widget>
  </widget>
  <resources/>
