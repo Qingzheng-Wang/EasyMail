@@ -117,3 +117,5 @@ class Ui_Dialog(object):
         self.pushButtonSignin.setText(_translate("Dialog", "Sign in"))
         self.labelEasyMail.setText(_translate("Dialog", "EasyMail"))
 
+
+
