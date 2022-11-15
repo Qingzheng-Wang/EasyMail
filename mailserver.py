@@ -4,6 +4,7 @@ from copy import *
 import os
 import time
 import email.header
+from email.parser import Parser
 
 class Mail:
     sender=''  #发件人地址
@@ -155,6 +156,12 @@ class Pop3:  #邮件接收类
         for i in maillist:
             SQL().add_sql(i.sender,i.receiver,i.topic,i.store_addr)
         return
+    def get_body(self,msg):
+        if msg.is_multipart():
+            return self.get_body(msg.get_payload(0))
+        else:
+            return msg.get_payload(None,decode=True)
+    
     def recvmail(self,operation,index):
         
         path='C:\\MailServer'  #默认路径
@@ -241,9 +248,20 @@ class Pop3:  #邮件接收类
             if(recv[0:3]!='+OK'):
                 print("error")
                 return 
-            f=open(path+'\\'+uidlist[2][0:len(uidlist[2])-2]+'.txt',mode='w')
             recvlist=recv.split('\n',1)
-            f.write(recvlist[1])
+            msg=Parser().parsestr(recvlist[1])
+            charset=msg.get_charset()
+            if charset is None:
+                if(recv.find('UTF-8')!=-1 or recv.find('utf-8')!=-1):
+                    charset='utf-8'
+                elif(recv.find('GBK')!=-1):
+                    charset='gbk'
+                else:
+                    charset='utf-8'
+            body=self.get_body(msg).decode(charset)
+            f=open(path+'\\'+uidlist[2][0:len(uidlist[2])-2]+'.txt',mode='w')
+            #recvlist=recv.split('\n',1)
+            f.write(body)
             f.close()
         elif operation == 'DELE':
             Socket.sendall(('DELE '+str(index)+'\r\n').encode())
