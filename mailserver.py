@@ -2,6 +2,8 @@ import pymysql
 from socket import *
 from copy import *
 import os
+import time
+import email.header
 
 class Mail:
     sender=''  #发件人地址
@@ -79,7 +81,7 @@ class Smtp: #邮件发送类
         f=open(self.mail.store_addr)
         message=f.read()
         Socket=socket(AF_INET,SOCK_STREAM)
-        Socket.connect(self.mailserver,25)
+        Socket.connect((self.mailserver,25))
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='220':
             #输出错误,print()函数仅用作测试
@@ -87,36 +89,43 @@ class Smtp: #邮件发送类
             return
         helomsf='HELO '+self.username+'\r\n'
         Socket.send(helomsf.encode())
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='250':
             print("error")
             return
         Socket.sendall('AUTH LOGIN\r\n')
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='334':
             print("error")
             return
         Socket.sendall((self.username+'\r\n').encode())
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='334':
             print("error")
             return
         Socket.sendall((self.password+'\r\n').encode)
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='334':
             print("error")
             return
         Socket.sendall(('MAIL FROM: '+'<'+self.mail.sender+'>\r\n').encode())
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='250':
             print("error")
             return
         Socket.sendall(('RCPT TO: '+'<'+self.mail.receiver+'>\r\n').encode())
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='250':
             print("error")
             return
         Socket.sendall(('DATA\r\n').encode())
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='354':
             print("error")
@@ -124,6 +133,7 @@ class Smtp: #邮件发送类
 
         Socket.sendall(message.encode())
         Socket.sendall('\r\n.\r\n'.encode())
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='250':
             print("error")
@@ -147,23 +157,24 @@ class Pop3:  #邮件接收类
         return
     def recvmail(self,operation,index):
         
-        path='C:\\MailServer0'  #默认路径
-        while os.path.exists(path):
-            path -= '0'
-            path += '1'
-        os.makedirs(path)
+        path='C:\\MailServer'  #默认路径
+        while not os.path.exists(path):
+            os.makedirs(path)
         Socket=socket(AF_INET,SOCK_STREAM)
-        Socket.connect(self.mailserver,110)
+        Socket.connect((self.mailserver,110))
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='+OK':
             print("error")
             return 
-        Socket.sendall(('USER'+self.username+'\r\n').encode())
+        Socket.sendall(('USER '+self.username+'\r\n').encode())
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='+OK':
             print("error")
             return 
-        Socket.sendall(('PASS'+self.password+'\r\n').encode())
+        Socket.sendall(('PASS '+self.password+'\r\n').encode())
+        time.sleep(1)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='+OK':
             print("error")
@@ -171,52 +182,72 @@ class Pop3:  #邮件接收类
 
         if operation=='STAT':
             Socket.send('STAT\r\n'.encode())
+            time.sleep(1)
             recv=Socket.recv(1024).decode()
             print(recv) #仅作测试用
         elif operation=='LIST':
-            #index=input("choose one mail")
             Socket.send('LIST\r\n'.encode())
-            recv=Socket.recv(1024).decode()
+            time.sleep(1)
+            recv=Socket.recv(65536).decode()
             if recv[0:3]!='+OK':
                 print("error")
                 return 
-            recv=Socket.recv(65536).decode()
-            recvlist=recv.split('\n')
+            recvlist=recv.split('\r\n')
             maillist=[]
-            for per in recvlist:
+            for per in recvlist[1:len(recvlist)-2]:
                 Socket.sendall(('TOP '+per[0]+' 5\r\n').encode())
-                recv=Socket.recv(2048).decode()
-                recvlist=recv.split('\n')
+                time.sleep(1)
+                recv=Socket.recv(65536).decode()
+                toplist=recv.split('\r\n')
                 mail=Mail()
-                mail.receiver=self.username
-                mail.sender=recvlist[0][4:]
-                mail.topic=recvlist[3]
+                mail.receiver=self.username+'@'+self.mailserver
+                findex=0
+                fcode=''
+                dflag=False
+                for i in range(len(toplist)):
+                    if(toplist[i].find('From:') != -1):
+                        findex=i
+                        break
+                mail.sender=toplist[findex][5:]
+                for i in range(len(toplist)):
+                    if(toplist[i].find('Subject:') != -1):
+                        findex=i
+                        starti=toplist[i].find('=?')
+                        if(starti==-1):
+                            dflag=True
+                        break
+                if(dflag):
+                    stmp,fcode=email.header.decode_header(toplist[findex][8:])
+                    mail.topic=stmp.decode(fcode)
+                else:
+                    mail.topic=toplist[findex][8:]
                 Socket.send(('UIDL '+per[0]+'\r\n').encode())
+                time.sleep(1)
                 uid=Socket.recv(1024).decode()
-                mail.store_addr=path+'\\'+uid+'.txt'
+                mail.store_addr=path+'\\'+uid[6:len(uid)-4]+'.txt'
                 maillist.append(mail)
             self.store(maillist)
             print(recv)
             ##此处需连接数据库##
         elif operation=='RETR':
-            #index=input('choose one mail')
-            Socket.sendall(('RETR '+index+'\r\n').encode())
-            recv=Socket.recv(1024).decode()
+            Socket.sendall(('UIDL '+str(index)+'\r\n').encode())
+            time.sleep(1)
+            uid=Socket.recv(1024).decode()
+            Socket.sendall(('RETR '+str(index)+'\r\n').encode())
+            time.sleep(1)
+            recv=Socket.recv(65536).decode()
             if(recv[0:3]!='+OK'):
                 print("error")
                 return 
-            Socket.sendall(('UIDL '+index+'\r\n').encode())
-            uid=Socket.recv(1024).decode()
-            recv=Socket.recv(1024).decode()
-            f=open(path+'\\'+uid+'.txt',mode='w')
-            recv=Socket.recv(65535).decode()
-            f.write(recv)
+            f=open(path+'\\'+uid[6:len(uid)-4]+'.txt',mode='w')
+            recvlist=recv.split('\n',1)
+            f.write(recvlist[1])
             f.close()
         elif operation == 'DELE':
-            #index=input('choose one mail')
-            Socket.sendall(('DELE '+index+'\r\n').encode())
+            Socket.sendall(('DELE '+str(index)+'\r\n').encode())
         Socket.send('QUIT'.encode())
         Socket.close()
         return 
+
 
 
