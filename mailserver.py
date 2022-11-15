@@ -194,37 +194,38 @@ class Pop3:  #邮件接收类
                 return 
             recvlist=recv.split('\r\n')
             maillist=[]
-            for per in recvlist[1:len(recvlist)-2]:
-                Socket.sendall(('TOP '+per[0]+' 5\r\n').encode())
+            for per in range(1,len(recvlist[1:len(recvlist)-2])+1):
+                Socket.sendall(('TOP '+str(per)+' 5\r\n').encode())
                 time.sleep(1)
                 recv=Socket.recv(65536).decode()
                 toplist=recv.split('\r\n')
                 mail=Mail()
                 mail.receiver=self.username+'@'+self.mailserver
                 findex=0
-                fcode=''
+                starti=0
                 dflag=False
                 for i in range(len(toplist)):
-                    if(toplist[i].find('From:') != -1):
+                    if(toplist[i].find('From: ') != -1):
                         findex=i
                         break
                 mail.sender=toplist[findex][5:]
                 for i in range(len(toplist)):
-                    if(toplist[i].find('Subject:') != -1):
+                    if(toplist[i].find('Subject: ') != -1):
                         findex=i
                         starti=toplist[i].find('=?')
-                        if(starti==-1):
+                        if(starti!=-1):
                             dflag=True
                         break
                 if(dflag):
-                    stmp,fcode=email.header.decode_header(toplist[findex][8:])
+                    stmp,fcode=email.header.decode_header(toplist[findex][starti:])[0]
                     mail.topic=stmp.decode(fcode)
                 else:
                     mail.topic=toplist[findex][8:]
-                Socket.send(('UIDL '+per[0]+'\r\n').encode())
+                Socket.send(('UIDL '+str(per)+'\r\n').encode())
                 time.sleep(1)
                 uid=Socket.recv(1024).decode()
-                mail.store_addr=path+'\\'+uid[6:len(uid)-4]+'.txt'
+                uidlist=uid.split(' ')
+                mail.store_addr=path+'\\'+uidlist[2][0:len(uidlist[2])-2]+'.txt'
                 maillist.append(mail)
             self.store(maillist)
             print(recv)
@@ -233,13 +234,14 @@ class Pop3:  #邮件接收类
             Socket.sendall(('UIDL '+str(index)+'\r\n').encode())
             time.sleep(1)
             uid=Socket.recv(1024).decode()
+            uidlist=uid.split(' ')
             Socket.sendall(('RETR '+str(index)+'\r\n').encode())
             time.sleep(1)
             recv=Socket.recv(65536).decode()
             if(recv[0:3]!='+OK'):
                 print("error")
                 return 
-            f=open(path+'\\'+uid[6:len(uid)-4]+'.txt',mode='w')
+            f=open(path+'\\'+uidlist[2][0:len(uidlist[2])-2]+'.txt',mode='w')
             recvlist=recv.split('\n',1)
             f.write(recvlist[1])
             f.close()
