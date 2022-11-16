@@ -6,7 +6,7 @@ import email.header
 from email.parser import Parser
 import sql
 
-sleeptime=1
+sleeptime=0.8
 
 class Mail:
     sender=''  #发件人地址
@@ -221,7 +221,9 @@ class Pop3:  #邮件接收类
             uid=Socket.recv(1024).decode()
             uidlist=uid.split(' ')
             Socket.sendall(('DELE '+str(index)+'\r\n').encode())
-            sql.SQL.delete_sql(uidlist[2][0:len(uidlist)-2])
+            os.remove(path+'\\'+uidlist[2][0:len(uidlist[2])-2]+'.txt')
+            sql.SQL.delete_sql(uidlist[2][0:len(uidlist[2])-2])
+            sql.SQL.update_after_dele(index)
         Socket.send('QUIT'.encode())
         Socket.close()
         return 

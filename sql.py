@@ -38,7 +38,7 @@ class SQL:  # 数据存储类
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
-        sql_delete = "DELETE FROM user WHERE uid = '%s'" % (uid)
+        sql_delete = "DELETE FROM Mail WHERE uid = '%s'" % (uid)
         cursor.execute(sql_delete)
         cursor.close()
         conn.close()
@@ -64,6 +64,22 @@ class SQL:  # 数据存储类
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
         sql_add = "DROP TABLE Mail"
+        cursor.execute(sql_add)
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def update_after_dele(index):
+        try:
+            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+        except Exception as e:
+            print(f'数据库连接失败：{e}')
+        cursor = conn.cursor()
+        sql_add = "UPDATE Mail SET listnum=listnum-1 WHERE uid IN \
+                    (SELECT M1.uid FROM \
+                    (SELECT M.uid FROM Mail AS M WHERE M.listnum>%d)\
+                    AS M1);" % (index)
         cursor.execute(sql_add)
         conn.commit()
         cursor.close()
