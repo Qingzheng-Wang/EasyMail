@@ -15,14 +15,14 @@ class SQL:  # 数据存储类
         conn.close()
 
     @staticmethod
-    def search_sql(sender, receiver, topic,uid,listnum):
+    def search_sql(receiver):
         try:
             conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
-        sql_search = "select * from GroupII WHERE sender = '%s' AND receiver = '%s' AND topic = '%s' AND uid = '%s' AND listnum=%s" \
-                     % (sender, receiver, topic, uid,listnum)
+        sql_search = "select * from Mail WHERE receiver = '%s' " \
+                     % (receiver)
         cursor.execute(sql_search)
         results = cursor.fetchall()
         cursor.close()
