@@ -1,85 +1,31 @@
-import pymysql
 from socket import *
 from copy import *
 import os
 import time
 import email.header
 from email.parser import Parser
+import sql
 
 class Mail:
     sender=''  #发件人地址
     receiver=''  #收件人地址
     topic=''  #标题
-    store_addr=''  #文件储存地址
-
-class SQL:  # 数据存储类
-    @staticmethod
-    def create_sql(self):
-        try:
-            conn = pymysql.connect(host='localhost', user='root', password='123456',port=3306, charset='utf8')
-        except Exception as e:
-            print(f'数据库连接失败：{e}')
-        cursor = conn.cursor()
-        sql_init = 'create table  %s (sender char(20), receiver char(20), topic char(30), store_addr char(50) ' \
-                   'PRIMARY KEY(sender, receiver, topic))' % (GroupII,)
-        cursor.execute(sql_init)
-        cursor.close()
-        conn.close()
-
-    @staticmethod
-    def search_sql(sender, receiver, topic):
-        try:
-            conn = pymysql.connect(host='localhost', user='root', password='123456', port=3306, charset='utf8')
-        except Exception as e:
-            print(f'数据库连接失败：{e}')
-        cursor = conn.cursor()
-        sql_search = 'select * from GroupII WHERE sender = %s AND receiver = %s AND topic = %s' \
-                     % (sender, receiver, topic)
-        cursor.execute(sql_search)
-        results = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        if not results:
-            return
-        return results
-
-    @staticmethod
-    def delete_sql(sender, receiver, topic):
-        try:
-            conn = pymysql.connect(host='localhost', user='root', password='123456', port=3306, charset='utf8')
-        except Exception as e:
-            print(f'数据库连接失败：{e}')
-        cursor = conn.cursor()
-        sql_delete = 'DELETE FROM user WHERE sender = %s AND receiver = %s AND topic = %s' % (sender, receiver, topic)
-        cursor.execute(sql_delete)
-        cursor.close()
-        conn.close()
-
-    @staticmethod
-    def add_sql(sender, receiver, topic, store_addr):
-        try:
-            conn = pymysql.connect(host='localhost', user='root', password='123456', port=3306, charset='utf8')
-        except Exception as e:
-            print(f'数据库连接失败：{e}')
-        cursor = conn.cursor()
-        sql_add = 'INSERT INTO GroupII VALUES (%s,%s,%s,%s,%s,%s)' % (sender, receiver, topic, store_addr)
-        cursor.execute(sql_add)
-        conn.commit()
-        cursor.close()
-        conn.close()
+    uid=''  #文件uid
 
 class Smtp: #邮件发送类
     mailserver=''  #邮件服务器
     username=''   #用户名
     password=''     #密码
+    path=''
     mail=Mail()
-    def __init__(self,mail,mailserver,username,password) -> None:
+    def __init__(self,mail,mailserver,username,password,path) -> None:
         self.mail=deepcopy(mail)
         self.mailserver=mailserver
         self.username=username
         self.password=password
+        self.path=path
     def sendmail(self):
-        f=open(self.mail.store_addr)
+        f=open(self.path+'\\'+self.mail.uid+'.txt')
         message=f.read()
         Socket=socket(AF_INET,SOCK_STREAM)
         Socket.connect((self.mailserver,25))
@@ -153,8 +99,10 @@ class Pop3:  #邮件接收类
         self.password=password
 
     def store(self,maillist):
+        sql.SQL.drop_table()
+        sql.SQL.create_sql('Mail')
         for i in maillist:
-            SQL().add_sql(i.sender,i.receiver,i.topic,i.store_addr)
+            sql.SQL().add_sql(i.sender,i.receiver,i.topic,i.uid)
         return
     def get_body(self,msg):
         if msg.is_multipart():
@@ -232,7 +180,7 @@ class Pop3:  #邮件接收类
                 time.sleep(1)
                 uid=Socket.recv(1024).decode()
                 uidlist=uid.split(' ')
-                mail.store_addr=path+'\\'+uidlist[2][0:len(uidlist[2])-2]+'.txt'
+                mail.uid=uidlist[2][0:len(uidlist[2])-2]
                 maillist.append(mail)
             self.store(maillist)
             print(recv)
@@ -264,10 +212,14 @@ class Pop3:  #邮件接收类
             f.write(body)
             f.close()
         elif operation == 'DELE':
+            Socket.sendall(('UIDL '+str(index)+'\r\n').encode())
+            time.sleep(1)
+            uid=Socket.recv(1024).decode()
+            uidlist=uid.split(' ')
             Socket.sendall(('DELE '+str(index)+'\r\n').encode())
+            sql.SQL.delete_sql(uidlist[2][0:len(uidlist)-2])
         Socket.send('QUIT'.encode())
         Socket.close()
         return 
-
 
 
