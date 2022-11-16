@@ -101,8 +101,10 @@ class Pop3:  #邮件接收类
     def store(self,maillist):
         sql.SQL.drop_table()
         sql.SQL.create_sql('Mail')
+        cnt=1
         for i in maillist:
-            sql.SQL().add_sql(i.sender,i.receiver,i.topic,i.uid)
+            sql.SQL().add_sql(i.sender,i.receiver,i.topic,i.uid,cnt)
+            cnt+=1
         return
     def get_body(self,msg):
         if msg.is_multipart():
