@@ -5,6 +5,8 @@ import time
 import email.header
 from email.parser import Parser
 import sql
+import hashlib
+import base64
 
 sleeptime=0.8
 
@@ -32,7 +34,7 @@ class Smtp: #邮件发送类
         Socket=socket(AF_INET,SOCK_STREAM)
         Socket.connect((self.mailserver,25))
         recv=Socket.recv(1024).decode()
-        if recv[0:3]!='220':
+        if recv[0:3]!='2':
             #输出错误,print()函数仅用作测试
             print("error")
             return
@@ -40,25 +42,26 @@ class Smtp: #邮件发送类
         Socket.send(helomsf.encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
-        if recv[0:3]!='250':
+        recvlist=recv.split('\r\n')
+        if recvlist[1][0:3]!='250':
             print("error")
             return
-        Socket.sendall('AUTH LOGIN\r\n')
+        Socket.sendall(('AUTH LOGIN\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='334':
             print("error")
             return
-        Socket.sendall((self.username+'\r\n').encode())
+        Socket.sendall((str(base64.b64encode((self.username+'@'+self.mailserver).encode()),'utf-8')+'\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='334':
             print("error")
             return
-        Socket.sendall((self.password+'\r\n').encode)
+        Socket.sendall((str(base64.b64encode(self.password.encode()),'utf-8')+'\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
-        if recv[0:3]!='334':
+        if recv[0:3]!='235':
             print("error")
             return
         Socket.sendall(('MAIL FROM: '+'<'+self.mail.sender+'>\r\n').encode())
@@ -101,11 +104,11 @@ class Pop3:  #邮件接收类
         self.password=password
 
     def store(self,maillist):
-        sql.SQL.drop_table()
+        sql.SQL.drop_table('Mail')
         sql.SQL.create_sql('Mail')
         cnt=1
         for i in maillist:
-            sql.SQL().add_sql(i.sender,i.receiver,i.topic,i.uid,cnt)
+            sql.SQL().add_sql(i.sender,i.receiver,i.topic,i.uid,cnt,'Mail')
             cnt+=1
         return
     def get_body(self,msg):
@@ -222,10 +225,50 @@ class Pop3:  #邮件接收类
             uidlist=uid.split(' ')
             Socket.sendall(('DELE '+str(index)+'\r\n').encode())
             os.remove(path+'\\'+uidlist[2][0:len(uidlist[2])-2]+'.txt')
-            sql.SQL.delete_sql(uidlist[2][0:len(uidlist[2])-2])
+            sql.SQL.delete_sql(uidlist[2][0:len(uidlist[2])-2],'Mail')
             sql.SQL.update_after_dele(index)
         Socket.send('QUIT'.encode())
         Socket.close()
         return 
 
+class Sender_proc:
+    def __init__(self,sender,receiver,subject,message) -> None:
+        self.sender=sender
+        self.receiver=receiver
+        self.message=message
+        self.subject=subject
+    
+    def gene_uid(self):
+        return hashlib.md5(self.message.encode('utf-8')).hexdigest()
+
+    def gene_mail(self):
+        msg="From: "+self.sender+'\n' \
+            +"To: "+self.receiver+'\n' \
+            +"Subject: "+self.subject+'\n' \
+            +"Date: "+time.asctime()+"\n"\
+            +"Content-Type: text/plain; charset=UTF-8 \n"\
+            +'\r\n'\
+            +self.message.encode('utf-8').decode('utf-8')+'\r\n'
+        return msg
+
+    def gene_mailclass(self):
+        mail=Mail()
+        mail.receiver=self.receiver
+        mail.sender=self.sender
+        mail.topic=self.subject
+        mail.uid=self.gene_uid()
+        return mail
+
+    def store(self):
+        mail=self.gene_mailclass()
+        path='C:\\MailServer\\Draft'
+        while not os.path.exists(path):
+            os.makedirs(path)
+        f=open(path+'\\'+mail.uid+'.txt',mode='w')
+        f.write(self.gene_mail())
+        f.close()
+        return path+'\\'+mail.uid+'.txt'
+
+    def add_to_sql(self):
+        sql.SQL.add_sql(self.sender,self.receiver,self.subject,self.gene_uid(),0)
 
