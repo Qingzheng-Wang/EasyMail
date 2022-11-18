@@ -104,8 +104,15 @@ class Pop3:  #邮件接收类
         self.password=password
 
     def store(self,maillist):
-        sql.SQL.drop_table('Mail')
-        sql.SQL.create_sql('Mail')
+        dbtuple=sql.SQL.show_tables()
+        dblist=''
+        for i in dbtuple:
+            dblist+=i[0]
+        if(dblist.find('mail')==-1):
+            sql.SQL.create_sql('Mail')
+        else:
+            sql.SQL.drop_table('Mail')
+            sql.SQL.create_sql('Mail')
         cnt=1
         for i in maillist:
             sql.SQL().add_sql(i.sender,i.receiver,i.topic,i.uid,cnt,'Mail')
@@ -190,7 +197,6 @@ class Pop3:  #邮件接收类
                 mail.uid=uidlist[2][0:len(uidlist[2])-2]
                 maillist.append(mail)
             self.store(maillist)
-            print(recv)
             ##此处需连接数据库##
         elif operation=='RETR':
             Socket.sendall(('UIDL '+str(index)+'\r\n').encode())
@@ -232,14 +238,15 @@ class Pop3:  #邮件接收类
         return 
 
 class Sender_proc:
-    def __init__(self,sender,receiver,subject,message) -> None:
+    def __init__(self,sender,receiver,subject,message) -> None:  #init时创建邮件报文
         self.sender=sender
         self.receiver=receiver
         self.message=message
         self.subject=subject
+        self.msg=self.gene_mail()  #此时确定时间戳
     
     def gene_uid(self):
-        return hashlib.md5(self.message.encode('utf-8')).hexdigest()
+        return hashlib.md5(self.msg.encode('utf-8')).hexdigest()
 
     def gene_mail(self):
         msg="From: "+self.sender+'\n' \
@@ -265,10 +272,17 @@ class Sender_proc:
         while not os.path.exists(path):
             os.makedirs(path)
         f=open(path+'\\'+mail.uid+'.txt',mode='w')
-        f.write(self.gene_mail())
+        f.write(self.msg)
         f.close()
         return path+'\\'+mail.uid+'.txt'
 
     def add_to_sql(self):
-        sql.SQL.add_sql(self.sender,self.receiver,self.subject,self.gene_uid(),0)
+        dbtuple=sql.SQL.show_tables()
+        dblist=''
+        for i in dbtuple:
+            dblist+=i[0]
+        if(dblist.find('draft')==-1):
+            sql.SQL.create_sql('Draft')
+        sql.SQL.add_sql(self.sender,self.receiver,self.subject,self.gene_uid(),0,'Draft')
+
 
