@@ -217,6 +217,8 @@ class Pop3:  #邮件接收类
                     charset='utf-8'
                 elif(recv.find('GBK')!=-1):
                     charset='gbk'
+                elif(recv.find('gb18030')):
+                    charset='gb18030'
                 else:
                     charset='utf-8'
             body=self.get_body(msg).decode(charset)

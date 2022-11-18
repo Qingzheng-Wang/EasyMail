@@ -192,7 +192,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="pageCompose">
        <widget class="QLabel" name="labelNewMail">
@@ -353,23 +353,10 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>0</y>
+          <y>50</y>
           <width>281</width>
-          <height>671</height>
+          <height>621</height>
          </rect>
-        </property>
-       </widget>
-       <widget class="QScrollBar" name="verticalScrollBar">
-        <property name="geometry">
-         <rect>
-          <x>260</x>
-          <y>0</y>
-          <width>21</width>
-          <height>671</height>
-         </rect>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
         </property>
        </widget>
        <widget class="QTextBrowser" name="textBrowser">
@@ -380,6 +367,32 @@
           <width>541</width>
           <height>681</height>
          </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="Reflesh_Button">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>-1</y>
+          <width>141</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Reflesh</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="show_mail_list_button">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>-1</y>
+          <width>141</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Show</string>
         </property>
        </widget>
       </widget>

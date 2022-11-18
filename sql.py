@@ -59,6 +59,24 @@ class SQL:  # 数据存储类
         return results
 
     @staticmethod
+    def search_sql_by_uid(receiver,uid, name):
+        try:
+            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+        except Exception as e:
+            print(f'数据库连接失败：{e}')
+        cursor = conn.cursor()
+        sql_search = "select * from %s WHERE receiver = '%s' AND uid='%s' " \
+                     % (name,receiver,uid)
+        cursor.execute(sql_search)
+        results = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        if not results:
+            return
+        return results
+
+
+    @staticmethod
     def delete_sql(uid, name):
         try:
             conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')

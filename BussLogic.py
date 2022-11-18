@@ -20,13 +20,13 @@ class SignInWindowUi(SignInWindow_Ui, QtWidgets.QDialog):
 
     def select_server_address(self):
         if self.comboBoxServerAddress.currentText() == "QQ Mail":
-            self.mail_server_address = "smtp.qq.com"
+            self.mail_server_address = "mail.qq.com"
         elif self.comboBoxServerAddress.currentText() == "WHU E-Mail":
-            self.mail_server_address = "smtp.whu.edu.cn"
+            self.mail_server_address = "whu.edu.cn"
         elif self.comboBoxServerAddress.currentText() == "Gmail":
             self.mail_server_address = "smtp.google.com"
         elif self.comboBoxServerAddress.currentText() == "163 Mail":
-            self.mail_server_address = "smtp.163.com"
+            self.mail_server_address = "mail.163.com"
 
 class MainWindowUi(MainWindow_Ui, QtWidgets.QMainWindow):
     def __init__(self):
@@ -74,6 +74,9 @@ class BussLogic:
         self.sender_proc = None
         self.sign_in_window.pushButtonSignin.clicked.connect(self.click_sign_in)
         self.main_window.pushButtonSend.clicked.connect(self.click_send)
+        self.main_window.Reflesh_Button.clicked.connect(self.reflesh_recv)
+        self.main_window.show_mail_list_button.clicked.connect(self.show_recv)
+        self.main_window.listWidget_2.itemClicked.connect(self.show_mail)
 
     def click_sign_in(self):
         self.mail_server = MailServer()
@@ -86,16 +89,59 @@ class BussLogic:
                                        receiver=self.main_window.lineEditTo.text(),
                                        subject=self.main_window.lineEditSubject.text(),
                                        message=self.main_window.textEdit.toPlainText())
-        mail = self.sender_proc.gene_mail_class()
-        path = self.sender_proc.store(mail)
+        mail = self.sender_proc.gene_mailclass()
+        self.sender_proc.store()
         self.mail_server.smtp.mail = mail
-        self.mail_server.smtp.path = path
+        self.mail_server.smtp.path = "C:\\MailServer\\Draft"
         self.mail_server.smtp.sendmail()
         self.main_window.display_subpage(3)
 
     def trans_info(self):
         mail_server_address, username, password = self.sign_in_window.fetch_info()
         self.mail_server.info_init(mail_server_address, username, password)
+
+    def reflesh_recv(self):
+        self.mail_server.pop3.recvmail('LIST',0)
+        recvaddr=self.mail_server.username+'@'+self.mail_server.mail_server
+        recvtuple=sql.SQL.search_sql(recvaddr,'Mail')
+        for t in recvtuple:
+            tmp=Recv_item(t[2],t[0],t[3],t[4])
+            self.main_window.listWidget_2.addItem(tmp)
+            self.main_window.listWidget_2.setItemWidget(tmp,tmp.widgit)
+
+    def show_recv(self):
+        recvaddr=self.mail_server.username+'@'+self.mail_server.mail_server
+        recvtuple=sql.SQL.search_sql(recvaddr,'Mail')
+        for t in recvtuple:
+            tmp=Recv_item(t[2],t[0],t[3],t[4])
+            self.main_window.listWidget_2.addItem(tmp)
+            self.main_window.listWidget_2.setItemWidget(tmp,tmp.widgit)
+
+    def show_mail(self,item):
+        uid=item.uid
+        if(not os.path.exists('C:\\MailServer\\'+uid+'.txt')):
+            self.mail_server.pop3.recvmail('RETR',item.index)
+        f=open('C:\\MailServer\\'+uid+'.txt')
+        msg=f.read()
+        self.main_window.textBrowser.setText(msg)
+
+class Recv_item(QtWidgets.QListWidgetItem):
+    def __init__(self,subject,sender,uid,index):
+        super().__init__()
+        self.uid=uid
+        self.index=index
+        self.widgit=QtWidgets.QWidget()
+        self.subject_label=QtWidgets.QLabel()
+        self.subject_label.setText(subject)
+        self.sender_label=QtWidgets.QLabel()
+        self.sender_label.setText(sender)
+        self.hbox=QtWidgets.QVBoxLayout()
+        self.hbox.addWidget(self.subject_label)
+        self.hbox.addWidget(self.sender_label)
+        self.widgit.setLayout(self.hbox)
+        self.setSizeHint(self.widgit.sizeHint())
+        
+        
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
