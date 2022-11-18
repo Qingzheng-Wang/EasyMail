@@ -287,9 +287,4 @@ class Sender_proc:
 
 
 
-# if __name__ == "__main__":
-#     sender = Sender_proc('qingzhengwang@whu.edu.cn', '1031459858@qq.com', 'I love you', 'Yes')
-#     mail = sender.gene_mail_class()
-#     path = sender.store(mail)
-#     smtp = Smtp('smtp.whu.edu.cn', 'qingzhengwang@whu.edu.cn', '20020922WQZ', path, mail)
-#     smtp.sendmail()
+
