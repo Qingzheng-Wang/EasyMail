@@ -15,7 +15,7 @@ class SQL:  # 数据存储类
         conn.close()
 
     @staticmethod
-    def search_sql(receiver,name):
+    def search_sql(receiver, name):
         try:
             conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
         except Exception as e:
@@ -32,7 +32,7 @@ class SQL:  # 数据存储类
         return results
 
     @staticmethod
-    def delete_sql(uid,name):
+    def delete_sql(uid, name):
         try:
             conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
         except Exception as e:
@@ -44,7 +44,7 @@ class SQL:  # 数据存储类
         conn.close()
 
     @staticmethod
-    def add_sql(sender, receiver, topic,uid,num,name):
+    def add_sql(sender, receiver, topic, uid,num,name):
         try:
             conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
         except Exception as e:
