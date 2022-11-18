@@ -18,7 +18,7 @@ class Smtp: #邮件发送类
     password=''     #密码
     path=''
     mail=Mail()
-    def __init__(self,mail,mailserver,username,password,path) -> None:
+    def __init__(self,mailserver, username, password, path=None, mail=None) -> None:
         self.mail=deepcopy(mail)
         self.mailserver=mailserver
         self.username=username
