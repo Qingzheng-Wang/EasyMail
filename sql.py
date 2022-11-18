@@ -1,6 +1,33 @@
 import pymysql
 
 class SQL:  # 数据存储类
+
+    @staticmethod
+    def create_db():
+        try:
+            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+        except Exception as e:
+            print(f'数据库连接失败：{e}')
+        cursor = conn.cursor()
+        sql_init = "CREATE DATABASE IF NOT EXISTS mail"
+        cursor.execute(sql_init)
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def show_tables():
+        try:
+            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+        except Exception as e:
+            print(f'数据库连接失败：{e}')
+        cursor = conn.cursor()
+        sql_init = "show tables from mail" 
+        cursor.execute(sql_init)
+        results = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return results
+
     @staticmethod
     def create_sql(name):
         try:
