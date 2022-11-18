@@ -22,7 +22,7 @@ class Smtp: #邮件发送类
     password=''     #密码
     path=''
     mail=Mail()
-    def __init__(self,mailserver, username, password, path=None, mail=None) -> None:
+    def __init__(self,mailserver, username, password, path=None, mail=None) -> None:  #路径虽然没有写死，但实际上只有C:\\MailServer\\Draft目录下可以写入数据库
         self.mail=deepcopy(mail)
         self.mailserver=mailserver
         self.username=username
@@ -284,6 +284,12 @@ class Sender_proc:
         if(dblist.find('draft')==-1):
             sql.SQL.create_sql('Draft')
         sql.SQL.add_sql(self.sender,self.receiver,self.subject,self.gene_uid(),0,'Draft')
+
+    @staticmethod
+    def delete_draft(uid):
+        os.remove("C:\\MailSever\\Draft\\"+uid+'.txt')
+        sql.SQL.delete_sql(uid,'Draft')
+
 
 
 
