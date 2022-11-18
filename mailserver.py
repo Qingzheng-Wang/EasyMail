@@ -17,8 +17,8 @@ class Mail:
     uid=''  #文件uid
 
 class Smtp: #邮件发送类
-    mailserver=''  #邮件服务器 like smtp.whu.edu.cn
-    username=''   #用户名 like qingzhengwang@whu.edu.cn
+    mailserver=''  #邮件服务器
+    username=''   #用户名
     password=''     #密码
     path=''
     mail=Mail()
@@ -28,60 +28,59 @@ class Smtp: #邮件发送类
         self.username=username
         self.password=password
         self.path=path
-
     def sendmail(self):
-        f=open(self.path)
+        f=open(self.path+'\\'+self.mail.uid+'.txt')
         message=f.read()
         Socket=socket(AF_INET,SOCK_STREAM)
         Socket.connect((self.mailserver,25))
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='2':
             #输出错误,print()函数仅用作测试
-            print(recv + '1')
+            print("error")
             return
         helomsf='HELO '+self.username+'\r\n'
         Socket.send(helomsf.encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         recvlist=recv.split('\r\n')
-        if recvlist[1][0:3]=='421':
-            print(recv + '2')
+        if recvlist[1][0:3]!='250':
+            print("error")
             return
-        Socket.sendall('AUTH LOGIN\r\n'.encode())
+        Socket.sendall(('AUTH LOGIN\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='334':
-            print(recv + '3')
+            print("error")
             return
-        Socket.sendall((str(base64.b64encode(self.username.encode()), 'utf-8') + '\r\n').encode())
+        Socket.sendall((str(base64.b64encode((self.username+'@'+self.mailserver).encode()),'utf-8')+'\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='334':
-            print(recv + '4')
+            print("error")
             return
         Socket.sendall((str(base64.b64encode(self.password.encode()),'utf-8')+'\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='235':
-            print(recv + '5')
+            print("error")
             return
         Socket.sendall(('MAIL FROM: '+'<'+self.mail.sender+'>\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='250':
-            print(recv + '6')
+            print("error")
             return
         Socket.sendall(('RCPT TO: '+'<'+self.mail.receiver+'>\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='250':
-            print(recv + '7')
+            print("error")
             return
         Socket.sendall(('DATA\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='354':
-            print(recv + '8')
+            print("error")
             return
 
         Socket.sendall(message.encode())
@@ -89,7 +88,7 @@ class Smtp: #邮件发送类
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='250':
-            print(recv + '9')
+            print("error")
 
         Socket.send('QUIT\r\n'.encode())
         Socket.close()
@@ -105,8 +104,15 @@ class Pop3:  #邮件接收类
         self.password=password
 
     def store(self,maillist):
-        sql.SQL.drop_table('Mail')
-        sql.SQL.create_sql('Mail')
+        dbtuple=sql.SQL.show_tables()
+        dblist=''
+        for i in dbtuple:
+            dblist+=i[0]
+        if(dblist.find('mail')==-1):
+            sql.SQL.create_sql('Mail')
+        else:
+            sql.SQL.drop_table('Mail')
+            sql.SQL.create_sql('Mail')
         cnt=1
         for i in maillist:
             sql.SQL().add_sql(i.sender,i.receiver,i.topic,i.uid,cnt,'Mail')
@@ -191,7 +197,6 @@ class Pop3:  #邮件接收类
                 mail.uid=uidlist[2][0:len(uidlist[2])-2]
                 maillist.append(mail)
             self.store(maillist)
-            print(recv)
             ##此处需连接数据库##
         elif operation=='RETR':
             Socket.sendall(('UIDL '+str(index)+'\r\n').encode())
@@ -233,16 +238,17 @@ class Pop3:  #邮件接收类
         return 
 
 class Sender_proc:
-    def __init__(self,sender,receiver,subject,message) -> None:
+    def __init__(self,sender,receiver,subject,message) -> None:  #init时创建邮件报文
         self.sender=sender
         self.receiver=receiver
         self.message=message
         self.subject=subject
+        self.msg=self.gene_mail()  #此时确定时间戳
     
-    def __gene_uid(self):
-        return hashlib.md5(self.message.encode('utf-8')).hexdigest()
+    def gene_uid(self):
+        return hashlib.md5(self.msg.encode('utf-8')).hexdigest()
 
-    def __gene_mail(self):
+    def gene_mail(self):
         msg="From: "+self.sender+'\n' \
             +"To: "+self.receiver+'\n' \
             +"Subject: "+self.subject+'\n' \
@@ -252,29 +258,38 @@ class Sender_proc:
             +self.message.encode('utf-8').decode('utf-8')+'\r\n'
         return msg
 
-    def gene_mail_class(self):
+    def gene_mailclass(self):
         mail=Mail()
         mail.receiver=self.receiver
         mail.sender=self.sender
         mail.topic=self.subject
-        mail.uid=self.__gene_uid()
+        mail.uid=self.gene_uid()
         return mail
 
-    def store(self, mail):
+    def store(self):
+        mail=self.gene_mailclass()
         path='C:\\MailServer\\Draft'
         while not os.path.exists(path):
             os.makedirs(path)
         f=open(path+'\\'+mail.uid+'.txt',mode='w')
-        f.write(self.__gene_mail())
+        f.write(self.msg)
         f.close()
         return path+'\\'+mail.uid+'.txt'
 
     def add_to_sql(self):
-        sql.SQL.add_sql(self.sender, self.receiver, self.subject, self.__gene_uid(), 0)
+        dbtuple=sql.SQL.show_tables()
+        dblist=''
+        for i in dbtuple:
+            dblist+=i[0]
+        if(dblist.find('draft')==-1):
+            sql.SQL.create_sql('Draft')
+        sql.SQL.add_sql(self.sender,self.receiver,self.subject,self.gene_uid(),0,'Draft')
 
-if __name__ == "__main__":
-    sender = Sender_proc('qingzhengwang@whu.edu.cn', '1031459858@qq.com', 'I love you', 'Yes')
-    mail = sender.gene_mail_class()
-    path = sender.store(mail)
-    smtp = Smtp('smtp.whu.edu.cn', 'qingzhengwang@whu.edu.cn', '20020922WQZ', path, mail)
-    smtp.sendmail()
+
+
+# if __name__ == "__main__":
+#     sender = Sender_proc('qingzhengwang@whu.edu.cn', '1031459858@qq.com', 'I love you', 'Yes')
+#     mail = sender.gene_mail_class()
+#     path = sender.store(mail)
+#     smtp = Smtp('smtp.whu.edu.cn', 'qingzhengwang@whu.edu.cn', '20020922WQZ', path, mail)
+#     smtp.sendmail()
