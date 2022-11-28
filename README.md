@@ -1,12 +1,23 @@
 # EasyMail
 
+[中文](#c)
+
 EasyMail是一个使用Python编写的电子邮件收发客户端。此项目是武汉大学计算机网络课程的大作业。
 
 项目主要使用SMTP和POP3协议收发邮件，使用PyQt5编写用户界面，使用MySQL管理数据库。
 
 实现细节以及代码描述如下。
 
-#### 邮件封装与生成
+[English](#e)
+
+EasyMail is an email client written in Python. This project is the major assignment of the computer network course of Wuhan University. 
+
+The project mainly uses SMTP and POP3 protocols to send and receive mail, PyQt5 to write the user interface, and MySQL to manage the database. 
+
+The implementation details and code are described below. 
+<a id= "c"> 中文版 </a>
+
+ #### 邮件封装与生成
 
 本实验中设置Mail类。其中uid在发件时为正文md5 hash函数值，收件时为POP3协议中生成的邮件唯一标识符。
 
@@ -111,3 +122,111 @@ show_recv()函数连接到功能listWidget模块，信号为itemClicked。函数
 show_mail()函数连接到收件箱列表listWidget模块，信号为item Clicked。函数将判断C:\MailServer路径下uid.txt文件是否存在，若存在，则直接打开uid.txt中的数据，并将读取的数据通过setText函数写入inbox窗口的文本框内。若不存在，则通过pop3类RETR指令下载对应邮件。
 
 List_item类初始化需提供subject、sender、uid、index四个参数。Uid和index存储备用，subject与sender生成相应的QLabel，并将两个QLabel垂直对齐到QVBoxLayout类下，最后将对齐的QVBoxLayout加入生成的QWidget对象中作为邮件列表项。
+
+<a id= "c"> English </a>
+
+#### Mail encapsulation and generation
+
+The Mail class is set in this experiment. The uid is the value of the body md5 hash function at the time of sending and the unique identifier of the message generated in the POP3 protocol at the time of receiving. 
+
+Mail encapsulation generated through Sender_The proc class is implemented. See Appendix 2 for the code. When initializing an email, the front-end needs to provide four pieces of information: the sender, the recipient, the subject, and the body content of the email_The mail () function generates the initial mail. gene_The mail() function generates a standard mail message from the content initialized by the class according to the standard mail message format, and generates the corresponding string according to the utf-8 code. When the email is generated at the same time, the timestamp is written in the email message, which can provide the sender's sending time and make the email content not duplicate, that is, the hash function value is not the same, so as to facilitate database management. 
+
+gene_mailclass() function will generate the corresponding Mail object from the provided initialization value for the convenience of the sending system. Where, uid uses gene_Uid () function generation. 
+
+gene_uid() function generates the md5 hash value of the mail message through the md5 function_The proc class will inject a timestamp, so the generated hash will not be the same when the mail information is the same. 
+
+store() function stores the generated mail message and Mail object in the path corresponding to the disk according to certain rules. The sending path set in this program is C:  MailServer  Draft. If there is no corresponding path, this path will be generated. Storage and writing are realized through Python standard open () and close () functions. The stored file name is uidTxt, that is, the uid of the mail message is used as the local file name of the mail message to ensure that the file will not repeat. 
+
+add_to_sql() function stores the generated Mail object in the database. Write to the database through the interface add provided by the database connection module_Sql() writes the elements in the Mail object to the Draft relational table. 
+
+delete_draft () function provides an interface to delete the mail in the draft box from the local and database. Through osThe interface between the remove() function and the database delete_The sql() function is deleted from the local and database. 
+
+Sender_proc class is used, the execution process is: initialization - generate mail message - generate Mail object - store - connect to the database. When sending an email, it is not necessary to connect to the database, and then call the Smtp sending class to send the generated email. 
+
+#### SMTP client implementation
+
+Before sending the Smtp class, you need to initialize the mail server, user name, password, mail object for sending mail, and the address for storing mail. The default address is C:  MailSever  Draft. 
+
+When sending, call the socket library for network programming operation, and send according to the SMTP protocol. First, connect to the mail server through port 25 of SMTP through the connect() function. If the connection is successful, 2 is returned. After sending the message, wait 0.8 seconds through the sleep() function before reading the contents of the returned buffer. If the waiting time is too short, the connection cannot be made. After reading the returned information each time, judge the returned information. If it succeeds, go to the next step. If it fails, return the corresponding error code. After the link is successful, send the HELO command to the server. If 250 is returned successfully, encode the sent information with the encode() function each time you send it, and decode the received information with the decode() function when you receive it. 
+
+Send the AUTH LOGIN command after returning 250. If 334 is returned, it is successful. Then send the user name and password to the server through base64 encoding. Before sending, send the user name and password through base64The b64encode() function encodes the sent information. 334 is returned when sending the user name, and 235 is returned after sending the password to prove that the user authentication is successful. After the verification is successful, the mail FROM command is sent in the format of MAIL FROM:+<+MAILsender+>+\r\n。If 250 is returned, the transmission is successful. Then send the RCPT TO command in the format of RCPT TO:+<+mailreceiver+>\r\n。If 250 is returned, the transmission is successful. 
+
+After success, send the DATA command to prepare to send the mail message. If 354 is returned, it indicates that the mail server is ready to receive the mail message. The program reads the corresponding mail message through the initialized local path and sends it to the mail server, and then sends  r  n.  r  n to indicate that the body has been sent. If 250 is returned, the sending is proved to be completed, and then the QUIT command is sent to complete the mail sending. 
+
+#### POP3 client implementation
+
+The mail receiving class Pop3 initializes the corresponding mail server, user name, and password before receiving, and receives mail through the recvmail (operation, index) function. Operation provides LIST, RETR, and DELE instructions. RETR and DELE need to provide the index parameter for operation. LIST is to update the mailing list, RETR is to download the corresponding mail, and DELE is to delete the corresponding mail. 
+
+The program is the same as sending an email. It establishes a connection with the server through port 110 through the connect() function. If the connection succeeds, the first three characters in the returned data are '+OK'. After the connection is established successfully, send the USER command and the user name. If the connection is successful, then send the user password through the PASS command. If "+OK" is returned, the user verification is successful. 
+
+After successful verification, the user judges the options provided by the operation. If the option is LIST, the user sends the LIST command and returns the current mail serial number list and the corresponding size of the mail inbox. Then traverse the list of inbox serial numbers obtained. For each mail serial number, the program sends the TOP command to obtain the header of the current mail, and uses the split () function to obtain the content data of the mail after ' r  n' division, and looks for From: and Subject: in the divided data to obtain the sender and title of the mail, Then initialize the Mail object according to these data. For the mail subject, if the subject conforms to the MIME standard mail format, use emailDecode in header class_The header () function decodes it, and the recipient is the user name and mail server directly. Then send the UIDL command to obtain the mail uid generated in the Pop3 protocol, which is used to initialize the Mail object. For each Mail object generated, the program stores it in a list and calls the store() function to store it in the database. 
+
+If the option is RETR, send the RETR command and index value to the server, and the server returns the corresponding mail message. For the returned mail message, the program first gets_The body () function obtains the mail body, and then looks up the original text to obtain the mail code (the default is utf-8), and decodes it through the encoding method obtained by the decode () function to generate the corresponding mail body. The program will open the directory with the path of C:  MailServer (if it does not exist, create a new directory), and write the generated message body into the directory. The file name is uidTxt, uid is the unique identifier of the message generated by Pop3 protocol. 
+
+If it is a DELE command, the program sends the DELE command and index value to the server, and the server deletes the corresponding mail, and then calls remove() function and delete_The sql() function deletes the local and database mail records. 
+
+The store() function writes the generated Mail object list to the database. The database opens the mail relational table (if it does not exist, create a new one)_The sql() function writes each mail information in the list to the database. 
+
+#### Database Connection
+
+The database connection is implemented through the pymysql class. Execute SQL statements by creating cursors. The default database is mail. There are two relationships: mail and draft. Mail is used to store receipt information and draft is used to store draft information. The two databases have the same attributes: sender, receiver, topic, uid, and listnum. They are sender, recipient, subject, uid and operand respectively. Corresponds to sender, receiver, topic, uid in Mail class and index value in Pop3 protocol. All listnums in the Draft relationship are set to 0. 
+
+create_db() function is used to create a new database mail, which needs to be run when the program is initialized. 
+
+create_sql() function is used to create a new relationship table. 
+
+search_sql () queries all the information in the database through the receiver. 
+
+search_sql_by_sender () function queries all the information in the database through the sender. 
+
+search_sql_by_uid () function queries all information in the database through the receiver and uid. 
+
+search_sql_by_uid_with_sender () function queries all information in the database through sender and uid. 
+
+delete_sql() function is used to delete the tuple of the corresponding uid. 
+
+add_sql() function is used to add new tuples under the corresponding database. 
+
+drop_table () function is used to delete the corresponding table. 
+
+#### Business logic implementation
+
+The business logic is implemented using the signal and slot mechanism of the Qt framework. The slot function is connected to the signal corresponding to the UI module to achieve the user's operation of the user interface. 
+
+The SignInWindowUi class and MainWindowUI class encapsulate the login page and main window respectively, and they inherit the SignInWindow respectively_Ui class and MainWindow_Ui class is a class generated by Qt Designer tool to define user interface devices. The business logic code needs to define some functions of the operation interface in the SignInWindowUi class and MaindowUi class. The operations associated with these functions are independent of the information entered by the user on the interface, that is, the operations on the interface will not change depending on the user. 
+
+fetch_info() function is connected to the login button on the login interface, and the signal is clicked. It is used to obtain the mail server, user name and password information from the text box. 
+
+select_server_address() function connects the check box of the login interface. The signal is activated. It is used to convert the options in the check box to the address of the mail server. 
+
+display_subpage() function connects the listWidget module of the main window, and the signal is currentRowChanged. Function to switch sub pages of the main window by clicking options in the listWidget. 
+
+resend_button () function is connected to the scratchpad resend button, and the signal is clicked. The program gets the currently accessed draft box mail from the database and initializes the Mail object. Then call Smtp class to send mail. After successful sending, call the database processing module to delete the mail record and local file and open the sending success window. 
+
+delete_mail() function connects to the delete button in the inbox window, and the signal is clicked. The function calls the DELE instruction of pop3 class to delete the currently accessed mail. After deletion, the LIST command is called to update the mail database. 
+
+The MailServer class inherits the Smtp class and Pop3 class. Its main function is to complete the initialization of the back-end program, and also to make the code structure clearer. 
+
+BussinessLogic class is the main component of business logic code. Its function is to realize operations related to user information. These operations vary from user to user. 
+
+show_draft () function is connected to the function listWidget module, and the signal is itemClicked. Function to determine whether it is a Draft column. If it is true, access all data in the draft relationship in the database and generate a List for each piece of data_The item object is added to the draft box list ListWidget through the addItem function. If it is false or there is no data in the database, it will be returned directly. 
+
+open_draft () function connects to the draft box list widget module, and the signal is item Clicked. The function will access the uid under the C:  MailServer  Draft pathTxt, and write the read data into the text box of the draft window through the setText function. 
+
+compose_to_inbox () is connected to the return inbox button in the sending success window. The signal is clicked. The function calls the setCurrentIndex (1) function to return to the inbox child window. 
+
+back_to_comp() function is connected to the return compose button in the sending success window. The signal is clicked. The function calls the setCurrentIndex (0) function to return the comp sub window. 
+
+click_sign_The in() function is connected to the send button of the comp sub window, and the signal is clicked. The function will initialize the MailServer object with the user information entered in the login window, open the main window, and close the login window. 
+
+click_send () function connects to the send button of the send page, and the signal is clicked. The function initializes the Sender of the mail information input on the sending page_Proc object, and generate a Mail object and store the message body to the default path. Then the program calls the Smtp class to send the generated email information. After successful transmission, the successful transmission interface will be opened. If the sending fails, return to the login interface and re-enter the account password. 
+
+click_save button of the sending interface connected by the save() function. The signal is clicked. The function initializes the Sender of the mail information input on the sending page_Proc object, and generate a Mail object and store the message body to the default path. Then call the database interface to store the mail information into the draft relationship. 
+
+reflesh_recv() function is connected to the refresh button of the inbox window, and the signal is clicked. The function will call the LIST instruction of Pop3 class to refresh the mail relationship in the database. Then clear the original receiving ListWidget module and initialize the list with the information in the database mail relationship_The item object is added to the ListWidget. If it fails to obtain information from the server, it will jump to the login page to re data the user name and password. If the access data is empty, it will be returned directly. 
+
+show_recv() function is connected to the function listWidget module, and the signal is itemClicked. Function to determine whether it is an Inbox column. If it is true, access all data in the mail relationship in the database and generate a List for each piece of data_The item object is added to the draft box list ListWidget through the addItem function. If it is false or there is no data in the database, it will be returned directly. 
+
+show_mail() function connects to the inbox list listWidget module, and the signal is item Clicked. The function will determine the uid under the C:  MailServer pathWhether the txt file exists. If so, directly open the uidTxt, and write the read data into the text box of the inbox window through the setText function. If it does not exist, download the corresponding email through the POP3 RETR command. 
+
+List_initialization of the item class requires four parameters: subject, sender, uid, and index. The Uid and index are stored for backup. The subject and sender generate the corresponding QLabels, vertically align the two QLabels under the QVBoxLayout class, and finally add the aligned QVBoxLayout to the generated QWidget object as a mailing list item. 
