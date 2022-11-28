@@ -15,7 +15,12 @@ EasyMail is an email client written in Python. This project is the major assignm
 The project mainly uses SMTP and POP3 protocols to send and receive mail, PyQt5 to write the user interface, and MySQL to manage the database. 
 
 The implementation details and code are described below. 
-<a id= "c"> 中文版 </a>
+
+
+
+<a id= "c">   </a>
+
+
 
  #### 邮件封装与生成
 
@@ -123,7 +128,11 @@ show_mail()函数连接到收件箱列表listWidget模块，信号为item Clicke
 
 List_item类初始化需提供subject、sender、uid、index四个参数。Uid和index存储备用，subject与sender生成相应的QLabel，并将两个QLabel垂直对齐到QVBoxLayout类下，最后将对齐的QVBoxLayout加入生成的QWidget对象中作为邮件列表项。
 
-<a id= "e"> English </a>
+
+
+<a id= "e">     </a>
+
+
 
 #### Mail encapsulation and generation
 
