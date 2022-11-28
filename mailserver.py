@@ -9,6 +9,7 @@ import hashlib
 import base64
 
 sleeptime=0.8
+errno =13
 
 class Mail:
     sender=''  #发件人地址
@@ -36,63 +37,66 @@ class Smtp: #邮件发送类
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='2':
             #输出错误,print()函数仅用作测试
-            print("error")
-            return
-        helomsf='HELO '+self.username+'\r\n'
+            print("error1")
+            return errno
+        unamelist=self.username.split('@')
+        helomsf='HELO '+unamelist[0]+'\r\n'
         Socket.send(helomsf.encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         recvlist=recv.split('\r\n')
         if recvlist[1][0:3]!='250':
-            print("error")
-            return
+            print("error2")
+            return errno
         Socket.sendall(('AUTH LOGIN\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='334':
-            print("error")
-            return
-        Socket.sendall((str(base64.b64encode((self.username+'@'+self.mailserver).encode()),'utf-8')+'\r\n').encode())
+            print("error3")
+            return errno
+        Socket.sendall((str(base64.b64encode(self.username.encode()),'utf-8')+'\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='334':
-            print("error")
-            return
+            print("error4")
+            return errno
         Socket.sendall((str(base64.b64encode(self.password.encode()),'utf-8')+'\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='235':
-            print("error")
-            return
+            print("error5")
+            return errno
         Socket.sendall(('MAIL FROM: '+'<'+self.mail.sender+'>\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='250':
-            print("error")
-            return
+            print("error6")
+            return errno
         Socket.sendall(('RCPT TO: '+'<'+self.mail.receiver+'>\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='250':
-            print("error")
-            return
+            print("error7")
+            return errno
         Socket.sendall(('DATA\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='354':
-            print("error")
-            return
+            print("error8")
+            return errno
 
         Socket.sendall(message.encode())
         Socket.sendall('\r\n.\r\n'.encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='250':
-            print("error")
+            print("error9")
+            return errno
 
         Socket.send('QUIT\r\n'.encode())
         Socket.close()
         f.close()
+        return 0
 
 class Pop3:  #邮件接收类
     mailserver=''
@@ -135,19 +139,20 @@ class Pop3:  #邮件接收类
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='+OK':
             print("error")
-            return 
-        Socket.sendall(('USER '+self.username+'\r\n').encode())
+            return errno
+        unamelist=self.username.split('@')
+        Socket.sendall(('USER '+unamelist[0]+'\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='+OK':
             print("error")
-            return 
+            return errno
         Socket.sendall(('PASS '+self.password+'\r\n').encode())
         time.sleep(sleeptime)
         recv=Socket.recv(1024).decode()
         if recv[0:3]!='+OK':
             print("error")
-            return 
+            return errno
 
         if operation=='STAT':
             Socket.send('STAT\r\n'.encode())
@@ -160,7 +165,7 @@ class Pop3:  #邮件接收类
             recv=Socket.recv(65536).decode()
             if recv[0:3]!='+OK':
                 print("error")
-                return 
+                return errno
             recvlist=recv.split('\r\n')
             maillist=[]
             for per in range(1,len(recvlist[1:len(recvlist)-2])+1):
@@ -169,7 +174,7 @@ class Pop3:  #邮件接收类
                 recv=Socket.recv(65536).decode()
                 toplist=recv.split('\r\n')
                 mail=Mail()
-                mail.receiver=self.username+'@'+self.mailserver
+                mail.receiver=self.username
                 findex=0
                 starti=0
                 dflag=False
@@ -208,7 +213,7 @@ class Pop3:  #邮件接收类
             recv=Socket.recv(65536).decode()
             if(recv[0:3]!='+OK'):
                 print("error")
-                return 
+                return errno
             recvlist=recv.split('\n',1)
             msg=Parser().parsestr(recvlist[1])
             charset=msg.get_charset()
@@ -224,7 +229,10 @@ class Pop3:  #邮件接收类
             body=self.get_body(msg).decode(charset)
             f=open(path+'\\'+uidlist[2][0:len(uidlist[2])-2]+'.txt',mode='w')
             #recvlist=recv.split('\n',1)
-            f.write(body)
+            try:
+                f.write(body)
+            except Exception as e:
+                print(e)
             f.close()
         elif operation == 'DELE':
             Socket.sendall(('UIDL '+str(index)+'\r\n').encode())
@@ -233,11 +241,11 @@ class Pop3:  #邮件接收类
             uidlist=uid.split(' ')
             Socket.sendall(('DELE '+str(index)+'\r\n').encode())
             os.remove(path+'\\'+uidlist[2][0:len(uidlist[2])-2]+'.txt')
-            sql.SQL.delete_sql(uidlist[2][0:len(uidlist[2])-2],'Mail')
-            sql.SQL.update_after_dele(index)
+            # sql.SQL.delete_sql(uidlist[2][0:len(uidlist[2])-2],'Mail')
+            # sql.SQL.update_after_dele(index)
         Socket.send('QUIT'.encode())
         Socket.close()
-        return 
+        return 0
 
 class Sender_proc:
     def __init__(self,sender,receiver,subject,message) -> None:  #init时创建邮件报文

@@ -227,6 +227,9 @@
    <property name="text">
     <string/>
    </property>
+   <property name="echoMode">
+    <enum>QLineEdit::Password</enum>
+   </property>
   </widget>
   <widget class="QLabel" name="labelUsername">
    <property name="geometry">
@@ -290,6 +293,12 @@
    </property>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>comboBoxServerAddress</tabstop>
+  <tabstop>lineEditUsername</tabstop>
+  <tabstop>lineEditPassword</tabstop>
+  <tabstop>pushButtonSignin</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

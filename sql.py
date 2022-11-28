@@ -5,7 +5,7 @@ class SQL:  # 数据存储类
     @staticmethod
     def create_db():
         try:
-            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
@@ -17,7 +17,7 @@ class SQL:  # 数据存储类
     @staticmethod
     def show_tables():
         try:
-            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
@@ -31,7 +31,7 @@ class SQL:  # 数据存储类
     @staticmethod
     def create_sql(name):
         try:
-            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
@@ -44,7 +44,7 @@ class SQL:  # 数据存储类
     @staticmethod
     def search_sql(receiver, name):
         try:
-            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
@@ -59,9 +59,26 @@ class SQL:  # 数据存储类
         return results
 
     @staticmethod
+    def search_sql_by_sender(receiver, name):
+        try:
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
+        except Exception as e:
+            print(f'数据库连接失败：{e}')
+        cursor = conn.cursor()
+        sql_search = "select * from %s WHERE sender = '%s' " \
+                     % (name,receiver)
+        cursor.execute(sql_search)
+        results = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        if not results:
+            return
+        return results
+
+    @staticmethod
     def search_sql_by_uid(receiver,uid, name):
         try:
-            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
@@ -75,28 +92,50 @@ class SQL:  # 数据存储类
             return
         return results
 
+    @staticmethod
+    def search_sql_by_uid_with_sender(sender,uid, name):
+        try:
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
+        except Exception as e:
+            print(f'数据库连接失败：{e}')
+        cursor = conn.cursor()
+        sql_search = "select * from %s WHERE sender = '%s' AND uid='%s' " \
+                     % (name,sender,uid)
+        cursor.execute(sql_search)
+        results = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        if not results:
+            return
+        return results
+
 
     @staticmethod
     def delete_sql(uid, name):
         try:
-            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
         sql_delete = "DELETE FROM %s WHERE uid = '%s'" % (name,uid)
         cursor.execute(sql_delete)
+        conn.commit()
+        records = cursor.fetchall()
         cursor.close()
         conn.close()
 
     @staticmethod
     def add_sql(sender, receiver, topic, uid,num,name):
         try:
-            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
         sql_add = "INSERT INTO %s VALUES ('%s','%s','%s','%s',%s)" % (name,sender, receiver, topic, uid,num)
-        cursor.execute(sql_add)
+        try:
+            cursor.execute(sql_add)
+        except Exception as e:
+            print(e)
         conn.commit()
         cursor.close()
         conn.close()
@@ -104,7 +143,7 @@ class SQL:  # 数据存储类
     @staticmethod
     def drop_table(name):
         try:
-            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()
@@ -117,7 +156,7 @@ class SQL:  # 数据存储类
     @staticmethod
     def update_after_dele(index):
         try:
-            conn = pymysql.connect(host='localhost',user='root',password='4268',database='mail')
+            conn = pymysql.connect(host='localhost',user='root',password='20020922WQZ',database='mail')
         except Exception as e:
             print(f'数据库连接失败：{e}')
         cursor = conn.cursor()

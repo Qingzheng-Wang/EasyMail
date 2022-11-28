@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'D:\2022-2023大三上学习笔记\计算机网络课程设计\Mail-System\SignInWindow.ui'
+# Form implementation generated from reading ui file 'D:\2022-2023大三上学习笔记\计算机网络课程设计\Mail-System-Xuhao\SigninWindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.9.2
 #
@@ -92,6 +92,7 @@ class Ui_Dialog(object):
         font.setPointSize(10)
         self.lineEditPassword.setFont(font)
         self.lineEditPassword.setText("")
+        self.lineEditPassword.setEchoMode(QtWidgets.QLineEdit.Password)
         self.lineEditPassword.setObjectName("lineEditPassword")
         self.labelUsername = QtWidgets.QLabel(Dialog)
         self.labelUsername.setGeometry(QtCore.QRect(80, 260, 91, 31))
@@ -122,6 +123,9 @@ class Ui_Dialog(object):
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+        Dialog.setTabOrder(self.comboBoxServerAddress, self.lineEditUsername)
+        Dialog.setTabOrder(self.lineEditUsername, self.lineEditPassword)
+        Dialog.setTabOrder(self.lineEditPassword, self.pushButtonSignin)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
