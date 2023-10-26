@@ -1,10 +1,6 @@
 # EasyMail
 
-<p>
-
-![image-20221203101350860](https://github.com/Qingzheng-Wang/EasyMail/blob/main/image/sign_in_window.png){width=50%}
-
-</p>
+<img src="https://github.com/Qingzheng-Wang/EasyMail/blob/main/image/sign_in_window.png" width="300" />
 
 
 EasyMail是一个使用Python编写的电子邮件收发客户端。此项目是武汉大学计算机网络课程的大作业。
